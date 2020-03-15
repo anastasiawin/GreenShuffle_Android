@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">GreenShuffle</string>
+    <string name="button_shuffle_title">Get task</string>
 </resources>

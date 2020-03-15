@@ -3,19 +3,12 @@ package ru.astradeni.greenshuffle;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONException;
-
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -27,33 +20,31 @@ import ru.astradeni.greenshuffle.model.Task;
 public class MainActivity extends AppCompatActivity {
 
     String url = "https://greenshuffle.herokuapp.com/tasks";
-    String currentTask = "";
+    Task currentTask = null;
+
     SharedPreferences sPref;
-    final String SAVED_TASK = "saved_task";
+    final String SAVED_TASK_TITLE = "saved_task_title";
+    final String SAVED_TASK_DESCRIPTION = "saved_task_description";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         currentTask = loadTask();
         redrawTask();
-        Button btnGetTask = (Button) findViewById(R.id.button);
-        btnGetTask.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getTask();
-            }
-        });
     }
 
-    private void getTask() {
+    public void onClickShuffle(View view) {
         TaskController controller = new TaskController();
         controller.start();
 
     }
 
     private void redrawTask() {
-        TextView btnGetTask = (TextView) findViewById(R.id.textView);
-        btnGetTask.setText(currentTask);
+        TextView titleView = (TextView) findViewById(R.id.titleText);
+        TextView descriptionView = (TextView) findViewById(R.id.descriptionText);
+        titleView.setText(currentTask.getName());
+        descriptionView.setText(currentTask.getDescription());
     }
 
     public class TaskController implements Callback<Task> {
@@ -81,8 +72,7 @@ public class MainActivity extends AppCompatActivity {
         public void onResponse(Call<Task> call, Response<Task> response) {
             if (response.isSuccessful()) {
                 Task task = response.body();
-                currentTask = task.getName();
-                saveTask(task.getName());
+                currentTask = task;
                 redrawTask();
             } else {
                 System.out.println(response.errorBody());
@@ -95,16 +85,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void saveTask(String taskName) {
+    private void saveTask(Task task) {
         sPref = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor ed = sPref.edit();
-        ed.putString(SAVED_TASK, taskName);
+        ed.putString(SAVED_TASK_TITLE, task.getName());
+        ed.putString(SAVED_TASK_DESCRIPTION, task.getDescription());
+
         ed.commit();
     }
 
-    private String loadTask() {
+    private Task loadTask() {
         sPref = getPreferences(MODE_PRIVATE);
-        String savedTask = sPref.getString(SAVED_TASK, "");
-        return savedTask;
+        String currentTaskTitle = sPref.getString(SAVED_TASK_TITLE, "");
+        String currentTaskDescription = sPref.getString(SAVED_TASK_DESCRIPTION, "");
+        return new Task(currentTaskTitle, currentTaskDescription);
     }
 }
